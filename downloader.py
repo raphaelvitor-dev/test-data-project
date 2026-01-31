@@ -67,6 +67,7 @@ def download_files(files_url, min_files):
         year_str = files_url.rstrip("/").split("/")[-1]
         current_year = int(year_str)
         MAX_BACK_YEARS = 10
+        CHUNK_SIZE = 1024 * 1024
         decrease_year = 1
 
         # Aqui, fazemos a requisição GET na api, e se o status http for 200, começamos nossa lógica
@@ -170,13 +171,26 @@ def download_files(files_url, min_files):
             response = requests.get(url_item["url"], stream=True)
 
             if response.status_code != 200:
-                raise Exception(response.status_code)
+                raise Exception("Error!" + str(response.status_code))
 
-            CHUNK_SIZE = 1024 * 1024
+
             with open(file_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                     if chunk:
                         f.write(chunk)
+
+        response = requests.get("https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/Relatorio_cadop.csv")
+        if response.status_code != 200:
+            raise Exception("Error!" + str(response.status_code))
+
+        #Baixa a lista de operadoras ativas
+        csv_path = os.path.join("Trimestres", "Relatorio_cadop.csv")
+
+        with open(csv_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+                if chunk:
+                    f.write(chunk)
+
         print("Download Successful!")
         return None
     except Exception as e:
