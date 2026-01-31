@@ -1,38 +1,57 @@
 import pandas as pd
 import os
+import config as cfg
+import pprint
 
 
-def read_files(min_files):
+def get_file_paths(min_files):
     base_dir = "Trimestres"
-    years = []
+    year_dict = []
 
-    for year in sorted(os.listdir(base_dir), reverse=True):
-        year_path = os.path.join(base_dir, year)
+    while len(year_dict) < min_files:
+        years = sorted([y for y in os.listdir(base_dir) if y.isdigit()], reverse=True)
 
-        if not os.path.isdir(year_path):
-            continue
+        # PREPARA A LISTA DE DIRETÓRIOS POR ANO E TRIMESTRE
+        for year in years:
+            if len(year_dict) >= min_files:
+                break
+            year_path = os.path.join(base_dir, year)
+            quarters = sorted([q for q in os.listdir(year_path)], reverse=True)
 
-        quarters = []
+            for quarter in quarters:
 
-        for quarter in sorted(os.listdir(year_path), reverse=True):
-            quarter_path = os.path.join(year_path, quarter)
+                if len(year_dict) >= min_files:
+                    break
 
-            if os.path.isdir(quarter_path):
-                quarters.append(quarter)
+                if os.path.isdir(os.path.join(year_path, quarter)):
+                    quarter_path = os.path.join(year_path, quarter)
 
-        years.append({
-            "year": year,
-            "quarters": quarters
-        })
+                    for file in os.listdir(quarter_path):
+                        if len(year_dict) >= min_files:
+                            break
 
-    print(years)
-
-
-
-
-
-
-
+                        if file.endswith(".csv"):
+                            file_path = os.path.join(quarter_path, file)
+                            year_dict.append({
+                                "year": year,
+                                "quarter": quarter,
+                                "file_path": file_path
+                            })
 
 
-read_files(None)
+
+    return year_dict
+
+#================================================================#
+
+def proccess_data(year_dict):
+
+    for i in year_dict:
+        if i["file_path"].endswith(".csv"):
+            df = pd.read_csv(i["file_path"], sep=",")
+
+        elif i["file_path"].endswith(".xlsx"):
+            df = pd.read_excel(i["file_path"])
+
+        elif i["file_path"].endswith(".txt"):
+            df = pd.read_csv(i["file_path"], sep="\t")

@@ -225,9 +225,3 @@ def extract_files():
                     with zipfile.ZipFile(zip_archive, "r") as zip_ref:
                         print("Extracting files...")
                         zip_ref.extractall(quarter_folder)
-
-files = get_latest_year("https://dadosabertos.ans.gov.br/FTP/PDA/demonstracoes_contabeis/")
-download_files(files, 15)
-extract_files()
-
-
