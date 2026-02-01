@@ -13,6 +13,9 @@ def main():
     dl.download_files(files, cfg.MIN_FILES)
     dl.extract_files()
     lista = pf.get_file_paths(cfg.MIN_FILES)
+    pf.get_file_paths(cfg.MIN_FILES)
+    pf.check_files(lista)
+    pf.proccess_quarter_data(lista)
     print("Arquivos a serem processados")
 
     for file in lista:
