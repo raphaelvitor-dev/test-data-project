@@ -23,17 +23,17 @@ Para extrair os arquivos:
 Normalizacao de dados 9 passos:
 	1 - ler arquivos com diferentes extensoes .csv, .xlsx, .txt
 
-	2 - Padronizacao de Colunas | tabela.columns.str.strip().str.lower()
+	2 - Padronizacao de Colunas | df.columns.str.strip().str.lower()
 
-	3 - Remover duplicatas | table.drop_duplicates()
+	3 - Remover duplicatas | df.drop_duplicates()
 
-	4 - Remover colunas Vazias | table.dropna(axis=1, how"all")
+	4 - Remover colunas Vazias | df.dropna(axis=1, how"all")
 
-	5 - Tratar os tipos de dados | table.info() pd.to_{datatype}(colunadesejada, errors="coerce"(forca a transformar null em data)
+	5 - Tratar os tipos de dados | df.info() pd.to_{datatype}(colunadesejada, errors="coerce"(forca a transformar null em data)
 
-	6 - Tratar LINHAS com valores vazio | tabela["colunadesejada] = tabela["colunadesejada].fillna(valordesejado)
+	6 - Tratar LINHAS com valores vazio | tabela["colunadesejada] = df["colunadesejada].fillna(valordesejado)
 
-	7 - Padronizar Valores de Texto | tabela["colunadesejada].lower() ou .upper() dependendo do dado
+	7 - Padronizar Valores de Texto | df["colunadesejada].lower() ou .upper() dependendo do dado
 
 	8 - Padronizar decimais e floats | tabela["valores"] = tabela["valores"].replace("R$","").replace("." , "").replace("," , ".")
 
