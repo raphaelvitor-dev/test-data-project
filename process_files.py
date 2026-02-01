@@ -31,7 +31,7 @@ def get_file_paths(min_files):
                         if len(year_dict) >= min_files:
                             break
 
-                        if file.endswith(".csv"):
+                        if file.endswith(".csv") or file.endswith(".xlsx") or file.endswith(".txt"):
                             file_path = os.path.join(quarter_path, file)
                             year_dict.append({
                                 "year": year,
@@ -54,8 +54,14 @@ def proccess_data(year_dict):
     handled_dfs = []
     for i in year_dict:
         if i["file_path"].endswith(".csv"):
-
             dfs.append(pd.read_csv(i["file_path"], sep=";"))
+
+        if i["file_path"].endswith(".xlsx"):
+            dfs.append(pd.read_excel(i["file_path"]))
+
+        if i["file_path"].endswith(".txt"):
+            dfs.append(pd.read_csv(i["file_path"], sep="\t"))
+
 
 
 
