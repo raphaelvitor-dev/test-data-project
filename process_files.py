@@ -1,7 +1,8 @@
 import pandas as pd
 import os
 import config as cfg
-import pprint
+import pprint as pp
+from decimal import Decimal
 
 
 def get_file_paths(min_files):
@@ -46,12 +47,63 @@ def get_file_paths(min_files):
 
 def proccess_data(year_dict):
 
+
+
+
+    dfs = []
+    handled_dfs = []
     for i in year_dict:
         if i["file_path"].endswith(".csv"):
-            df = pd.read_csv(i["file_path"], sep=",")
 
-        elif i["file_path"].endswith(".xlsx"):
-            df = pd.read_excel(i["file_path"])
+            dfs.append(pd.read_csv(i["file_path"], sep=";"))
 
-        elif i["file_path"].endswith(".txt"):
-            df = pd.read_csv(i["file_path"], sep="\t")
+
+
+    for i, df in enumerate(dfs):
+
+        #Exclui colunas vazias
+        df.dropna(axis=1, how="all")
+
+        #Transforma os nomes da coluna para minusculo
+        df.columns = df.columns.str.strip().str.lower()
+
+        #retira os caracteres "_" dos nomes
+        df.columns = df.columns.str.replace("_", "")
+
+        #Passa valores financeiros para decimal para maior precisão e remove a ","
+        df["vlsaldoinicial"] = (
+            df["vlsaldoinicial"]
+            .str.replace("R\\$ ?", "", regex=True)
+            .str.replace(".", "", regex=False)
+            .str.replace(",", ".", regex=False)
+        )
+        df["vlsaldofinal"] = (
+            df["vlsaldofinal"]
+            .str.replace("R\\$ ?", "", regex=True)
+            .str.replace(".", "", regex=False)
+            .str.replace(",", ".", regex=False)
+        )
+        df["vlsaldoinicial"] = df["vlsaldoinicial"].apply(Decimal)
+        df["vlsaldofinal"] = df["vlsaldofinal"].apply(Decimal)
+
+
+        #Cria colunas requisitadas
+        df["valordespesas"] = df["vlsaldoinicial"] - df["vlsaldofinal"]
+        df["cnpj"] = ""
+        df["razaosocial"] = ""
+        df["ano"] = year_dict[i]["year"]
+        df["trimestre"] = year_dict[i]["quarter"]
+
+
+        handled_dfs.append(df)
+    print(handled_dfs[3]["trimestre"])
+
+
+
+
+
+
+df_pathlist = get_file_paths(cfg.MIN_FILES)
+proccess_data(df_pathlist)
+
+
