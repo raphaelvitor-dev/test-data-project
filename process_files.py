@@ -64,17 +64,16 @@ def proccess_data(year_dict):
 
 
 
-
+    #Nos arquivos trimestrais, não há cnpj,razaosocial. Irei tratar ao juntar as tabelas.
     for i, df in enumerate(dfs):
 
         #Exclui colunas vazias
         df.dropna(axis=1, how="all")
 
-        #Transforma os nomes da coluna para minusculo
-        df.columns = df.columns.str.strip().str.lower()
+        #Transforma os nomes da coluna para minusculo e sem _
+        df.columns = df.columns.str.strip().str.lower().replace("_", "")
 
-        #retira os caracteres "_" dos nomes
-        df.columns = df.columns.str.replace("_", "")
+
 
         #Passa valores financeiros para decimal para maior precisão e remove a ","
         df["vlsaldoinicial"] = (
