@@ -9,7 +9,7 @@ import zipfile
 def get_latest_year(url):
     try:
         #Aqui, fazemos a requisição GET na api, e se o status http for 200, começamos nossa lógica
-        response = requests.get(url)
+        response = requests.get(url, timeout=30)
         if response.status_code == 200:
             print("Success! (GET URL)")
 
@@ -71,10 +71,12 @@ def download_files(files_url, min_files):
         decrease_year = 1
 
         # Aqui, fazemos a requisição GET na api, e se o status http for 200, começamos nossa lógica
-        response = requests.get(files_url)
+        response = requests.get(files_url, timeout=30)
         zip_files = []
+
+
         if response.status_code == 200:
-            print("Success!")
+            print("Downloading files...")
 
             # Parse no HTML novamente, para capturarmos as tags <a/>
             soup = BeautifulSoup(response.text, "html.parser")
@@ -96,7 +98,8 @@ def download_files(files_url, min_files):
                         "year": current_year
                     })
 
-
+        else:
+            raise Exception(f"Error! {response.status_code}")
 
         '''
         Aqui, caso um ano ainda não tenha 3 trimestres, vamos fazer uma requisição para o ano anterior
@@ -108,7 +111,7 @@ def download_files(files_url, min_files):
 
             previous_year = int(year_str) - decrease_year
             previous_url = f"{BASE_URL}{str(previous_year)}/"
-            response = requests.get(previous_url)
+            response = requests.get(previous_url, timeout=30)
 
             #Aqui segue a mesma lógica, se o status da requisição não for 200, lançamos um erro e encerramos.
             if response.status_code != 200:
@@ -138,11 +141,12 @@ def download_files(files_url, min_files):
                     })
                     found_zip = True
             if not found_zip:
+                decrease_year += 1
                 continue
             # No final do loop, caso necessário adicionamos 1 ao decrementador para percorrer os anos anteriores.
             decrease_year += 1
 
-        print("Downloading items...")
+
         for url_item in zip_files:
 
             #Caso o item capturado seja o ano atual, utilizamos a variável current_year. Senão, utilizamos o year informado no dict "zip_files"
@@ -168,7 +172,7 @@ def download_files(files_url, min_files):
             para controlar a memória do download e escrevemos os binários dos arquivos no diretório file_path, encerrando assim
             o programa downloader.
             '''
-            response = requests.get(url_item["url"], stream=True)
+            response = requests.get(url_item["url"], stream=True, timeout=30)
 
             if response.status_code != 200:
                 raise Exception("Error!" + str(response.status_code))
@@ -179,7 +183,7 @@ def download_files(files_url, min_files):
                     if chunk:
                         f.write(chunk)
 
-        response = requests.get("https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/Relatorio_cadop.csv")
+        response = requests.get("https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/Relatorio_cadop.csv", timeout=30)
         if response.status_code != 200:
             raise Exception("Error!" + str(response.status_code))
 
@@ -207,6 +211,7 @@ def extract_files():
        as pastas e subpastas, encontrar os arquivos que terminam com .zip, e extrai-los na pasta do
        trimestre'''
 
+    print("Extracting files...")
     for year in os.listdir(base_folder):
         year_folder = os.path.join(base_folder, year)
         if not os.path.isdir(year_folder):
@@ -223,5 +228,5 @@ def extract_files():
                     zip_archive = os.path.join(quarter_folder, file)
 
                     with zipfile.ZipFile(zip_archive, "r") as zip_ref:
-                        print("Extracting files...")
+
                         zip_ref.extractall(quarter_folder)

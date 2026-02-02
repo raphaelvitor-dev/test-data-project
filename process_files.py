@@ -170,8 +170,8 @@ def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
 
         zf.write(output_path, arcname="consolidado_despesas.csv")
-
-    os.remove(output_path)
+    if os.path.exists(output_path):
+        os.remove(output_path)
 
 
 
@@ -223,7 +223,7 @@ def process_registrations():
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
 
-        zf.write(output_path, arcname="dados_totais.csv")
+        zf.write(output_path, arcname="consolidado_despesas.csv")
 
     #Agrupa por Razão Social e UF.
     df_join["valordespesas"] = df_join["valordespesas"].astype(float)
@@ -243,6 +243,8 @@ def process_registrations():
     df_agrupado.to_csv(groupby_path, sep=";", index=False)
     if os.path.exists(registros_path):
         os.remove(registros_path)
+        os.remove(despesas_path)
+        os.rename(zip_path, despesas_path)
 
 
 
