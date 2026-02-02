@@ -295,7 +295,7 @@ def process_registrations():
     df_registro.columns = df_registro.columns.str.strip().str.lower().str.replace("_", "")
     df_registro = df_registro.rename(columns={"registrooperadora": "regans"})
     df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
-    df_registro = df_registro[df_registro["cnpj"].apply(cnpj_valido)]
+    #df_registro = df_registro[df_registro["cnpj"].apply(cnpj_valido)]
     df_registro = (df_registro.sort_values("regans").drop_duplicates(subset=["regans"], keep="first"))
 
 
@@ -311,7 +311,9 @@ def process_registrations():
         how="left"
     )
 
+    df_join["cnpj"] = df_join["cnpj"].apply(lambda x: x if cnpj_valido(str(x)) else "CNPJ INVÁLIDO")
     df_join.to_csv(output_path, sep=";", index=False)
+    os.remove(registros_path)
 
 
 

@@ -60,7 +60,7 @@
       <workItem from="1769877928298" duration="34566000" />
       <workItem from="1769958191350" duration="21925000" />
       <workItem from="1770029691733" duration="3329000" />
-      <workItem from="1770035003551" duration="9948000" />
+      <workItem from="1770035003551" duration="12281000" />
     </task>
     <servers />
   </component>
@@ -71,7 +71,7 @@
     <SUITE FILE_PATH="coverage/test_data_project$process_files.coverage" NAME="process_files Coverage Results" MODIFIED="1770041903455" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/test_data_project$clear.coverage" NAME="clear Coverage Results" MODIFIED="1769900131336" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/test_data_project$config.coverage" NAME="config Coverage Results" MODIFIED="1769910614719" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/test_data_project$main.coverage" NAME="main Coverage Results" MODIFIED="1770045419406" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/test_data_project$main.coverage" NAME="main Coverage Results" MODIFIED="1770047293738" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/test_data_project$parquet_reader.coverage" NAME="parquet_reader Coverage Results" MODIFIED="1769970570995" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/test_data_project$downloader.coverage" NAME="downloader Coverage Results" MODIFIED="1769879765293" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
