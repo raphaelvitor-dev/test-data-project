@@ -8,6 +8,35 @@ import zipfile
 
 from config import chunksize
 
+#==========================================================#
+
+def cnpj_valido(cnpj: str) -> bool:
+    if not cnpj:
+        return False
+
+    cnpj = "".join(filter(str.isdigit, str(cnpj)))
+
+    if len(cnpj) != 14:
+        return False
+
+    # elimina sequências inválidas
+    if cnpj == cnpj[0] * 14:
+        return False
+
+    pesos1 = [5,4,3,2,9,8,7,6,5,4,3,2]
+    pesos2 = [6] + pesos1
+
+    def calc_digito(cnpj, pesos):
+        soma = sum(int(d) * p for d, p in zip(cnpj, pesos))
+        resto = soma % 11
+        return "0" if resto < 2 else str(11 - resto)
+
+    dig1 = calc_digito(cnpj[:12], pesos1)
+    dig2 = calc_digito(cnpj[:12] + dig1, pesos2)
+
+    return cnpj[-2:] == dig1 + dig2
+
+#==================================================#
 
 def get_file_paths(min_files):
     base_dir = "Trimestres"
@@ -102,12 +131,11 @@ def proccess_quarter_data_parquet(year_dict, chunksize=cfg.chunksize):
         ("data", pa.large_string()),
         ("regans", pa.int64()),
         ("cdcontacontabil", pa.int64()),
-        ("descricao", pa.large_string()),
+        ("descricaogastos", pa.large_string()),
+        ("valor_suspeito", pa.bool_()),
         ("vlsaldoinicial", pa.decimal128(15, 2)),
         ("vlsaldofinal", pa.decimal128(15, 2)),
         ("valordespesas", pa.decimal128(15, 2)),
-        ("cnpj", pa.large_string()),
-        ("razaosocial", pa.large_string()),
         ("ano", pa.large_string()),
         ("trimestre", pa.large_string()),
     ])
@@ -165,11 +193,12 @@ def proccess_quarter_data_parquet(year_dict, chunksize=cfg.chunksize):
 
                 # Cria as colunas requisitadas pelo teste. Como no arquivo dos trimestres ainda não tem cnpj e razaosocial, vamos tratar os dois no join com o arquivo de cadastro
                 df["valordespesas"] = df["vlsaldoinicial"] - df["vlsaldofinal"]
-                df["cnpj"] = ""
-                df["razaosocial"] = ""
+                df["valor_suspeito"] = df["valordespesas"] < 0
                 df["ano"] = year
+                #O formato dos trimestres é formado pelo nome do diretório.
                 df["trimestre"] = quarter
                 df["descricao"] = df["descricao"].astype(str).str.lower()
+                df = df.rename(columns={"descricao": "descricaogastos"})
 
                 table = pa.Table.from_pandas(
                     df,
@@ -192,6 +221,10 @@ def proccess_quarter_data_parquet(year_dict, chunksize=cfg.chunksize):
             parquet_writer.close()
 
 #========================================================================#
+
+
+
+#======================================================#
 
 def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
     output_path = os.path.join("Trimestres", "consolidado_despesas.csv")
@@ -232,11 +265,11 @@ def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
                     )
 
                 df["valordespesas"] = df["vlsaldoinicial"] - df["vlsaldofinal"]
-                df["cnpj"] = ""
-                df["razaosocial"] = ""
+                df["valor_suspeito"] = df["valordespesas"] < 0
                 df["ano"] = year
                 df["trimestre"] = quarter
                 df["descricao"] = df["descricao"].astype(str).str.lower()
+                df = df.rename(columns={"descricao": "descricaogastos"})
 
                 df.to_csv(output_path,sep=";",index=False,mode="w" if first_write else "a",header=first_write)
 
@@ -254,31 +287,37 @@ def process_registrations():
     registros_path = os.path.join("Trimestres", "Relatorio_cadop.csv")
     output_path = os.path.join("Trimestres", "despesas_agregadas.csv")
 
+    #Lê os dataframes
     df_despesas = pd.read_csv(despesas_path, sep=";")
     df_registro = pd.read_csv(registros_path, sep=";")
 
-    #Normalização dos nomes das colunas
+    #Tratamento do df registro
     df_registro.columns = df_registro.columns.str.strip().str.lower().str.replace("_", "")
+    df_registro = df_registro.rename(columns={"registrooperadora": "regans"})
+    df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
+    df_registro = df_registro[df_registro["cnpj"].apply(cnpj_valido)]
+    df_registro = (df_registro.sort_values("regans").drop_duplicates(subset=["regans"], keep="first"))
 
-    #Criação de colunas:
 
     #Normalizo os nomes para os arquivos serem compativeis no join
-    df_registro = df_registro.rename(columns={
-        "REGISTRO_OPERADORA" : "regans",
-        "CNPJ" : "cnpj"
-    })
+
     #transforma cnpjs (identificadores) em strings, pois caso o cnpj tenha 0 antes do numero int, seu valor muda completamente.
-    df_despesas["cnpj"] = df_despesas["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
-    df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
+
 
     # Join pelo CNPJ
     df_join = df_despesas.merge(
         df_registro,
-        on="cnpj",
+        on="regans",
         how="left"
     )
 
-    df_join.to_csv("consolidado_despesas_com_cadastro.csv", sep=";", index=False)
+    df_join.to_csv(output_path, sep=";", index=False)
+
+
+
+
+
+
 
 
 
