@@ -16,6 +16,7 @@ def main():
     pf.check_files(lista)
     pf.proccess_quarter_data_csv(lista)
     pf.process_registrations()
+
     print("Arquivos a serem processados \n")
 
     for file in lista:

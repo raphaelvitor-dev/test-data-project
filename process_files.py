@@ -118,121 +118,12 @@ def check_files(year_dict, chunksize=cfg.chunksize):
 
 #================================================================#
 
-
-#Essa função lê os arquivos dos trimestres, e os junta em um arquivo final, por chunks para não estourar a memória.
-def proccess_quarter_data_parquet(year_dict, chunksize=cfg.chunksize):
-    parquet_path = os.path.join(
-        "Trimestres",
-        "consolidado_despesas.parquet"
-    )
-
-    #O schema da leitura por chunks, estava sendo alterado a cada chunk. Isso causa um bug no parquet writer, e interrompe o processo. Normalizando o schema, tudo volta ao normal.
-    schema = pa.schema([
-        ("data", pa.large_string()),
-        ("regans", pa.int64()),
-        ("cdcontacontabil", pa.int64()),
-        ("descricaogastos", pa.large_string()),
-        ("valor_suspeito", pa.bool_()),
-        ("vlsaldoinicial", pa.decimal128(15, 2)),
-        ("vlsaldofinal", pa.decimal128(15, 2)),
-        ("valordespesas", pa.decimal128(15, 2)),
-        ("ano", pa.large_string()),
-        ("trimestre", pa.large_string()),
-    ])
-
-    parquet_writer = None
-
-    try:
-
-        for meta in year_dict:
-            file_path = meta["file_path"]
-            year = meta["year"]
-            quarter = meta["quarter"]
-
-
-
-            # Aqui, eu peço para o pandas ler o arquivo por partes (o chunksize definido no parametro da funcao lê de tantas em tantas linhas) senão a memória estoura
-            if file_path.endswith(".csv"):
-                reader = pd.read_csv(
-                    file_path,
-                    sep=";",
-                    chunksize=chunksize
-                )
-
-            elif file_path.endswith(".txt"):
-                reader = pd.read_csv(
-                    file_path,
-                    sep="\t",
-                    chunksize=chunksize
-                )
-
-            else:
-                continue
-
-            for df in reader:
-                # Primeiro removo as colunas vazias pois não há dados nelas.
-                df = df.dropna(axis=1, how="all")
-
-                # transformo os nomes das colunas em letra minuscula
-                df.columns = (df.columns.str.strip().str.lower().str.replace("_", ""))
-
-
-
-
-                # Padroniza os valores financeiros para que utilizem . ao invés da vírgula
-                for col in ["vlsaldoinicial", "vlsaldofinal"]:
-                    df[col] = (
-                        df[col]
-                        .astype(str)
-                        .str.replace("R\\$ ?", "", regex=True)
-                        .str.replace(".", "", regex=False)
-                        .str.replace(",", ".", regex=False)
-                        .fillna("0")
-                        .apply(Decimal)
-                    )
-
-                # Cria as colunas requisitadas pelo teste. Como no arquivo dos trimestres ainda não tem cnpj e razaosocial, vamos tratar os dois no join com o arquivo de cadastro
-                df["valordespesas"] = df["vlsaldoinicial"] - df["vlsaldofinal"]
-                df["valor_suspeito"] = df["valordespesas"] < 0
-                df["ano"] = year
-                #O formato dos trimestres é formado pelo nome do diretório.
-                df["trimestre"] = quarter
-                df["descricao"] = df["descricao"].astype(str).str.lower()
-                df = df.rename(columns={"descricao": "descricaogastos"})
-
-                table = pa.Table.from_pandas(
-                    df,
-                    schema=schema,
-                    preserve_index=False
-                )
-
-                if parquet_writer is None:
-                    parquet_writer = pq.ParquetWriter(
-                        parquet_path,
-                        schema,
-                        compression="snappy"
-                    )
-
-                parquet_writer.write_table(table)
-
-    #Aqui os recursos na memória são liberados e os dados pendentes são gravados
-    finally:
-        if parquet_writer:
-            parquet_writer.close()
-
-#========================================================================#
-
-
-
-#======================================================#
-
 def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
     output_path = os.path.join("Trimestres", "consolidado_despesas.csv")
     groupby_path = os.path.join("Trimestres", "groupby")
     zip_path = os.path.join("Trimestres", "consolidado_despesas.zip")
+
     first_write = True
-
-
     for file in year_dict:
         file_path = file["file_path"]
         year = file["year"]
@@ -280,62 +171,78 @@ def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
 
         zf.write(output_path, arcname="consolidado_despesas.csv")
 
+    os.remove(output_path)
+
 
 
 #======================================================================#
 def process_registrations():
-    despesas_path = os.path.join("Trimestres", "consolidado_despesas.csv")
+    despesas_path = os.path.join("Trimestres", "consolidado_despesas.zip")
     registros_path = os.path.join("Trimestres", "Relatorio_cadop.csv")
     output_path = os.path.join("Trimestres", "despesas_agregadas.csv")
-    groupedby_path = os.path.join("Trimestres", "groupby.csv")
+    groupby_path = os.path.join("Trimestres", "despesas_agregadas.csv")
+    zip_path = os.path.join("Trimestres", "dados_totais.zip")
 
     #Lê os dataframes
-    if despesas_path.endswith(".csv"):
-        df_despesas = pd.read_csv(despesas_path, sep=";")
+    if despesas_path.endswith(".zip"):
+        df_despesas = pd.read_csv(despesas_path, sep=";", compression="zip")
         df_registro = pd.read_csv(registros_path, sep=";")
     elif despesas_path.endswith(".txt"):
         df_despesas = pd.read_csv(despesas_path, sep="\t")
         df_registro = pd.read_csv(registros_path, sep="\t")
-    else :
-        df_despesas = pd.read_parquet(despesas_path, sep="\t")
-        df_registro = pd.read_parquet(registros_path, sep="\t")
+    else:
+        df_despesas = pd.read_csv(despesas_path, sep=";")
+        df_registro = pd.read_csv(registros_path, sep=";")
 
     #Tratamento do df registro
+
     df_registro.columns = df_registro.columns.str.strip().str.lower().str.replace("_", "")
+
     df_registro = df_registro.rename(columns={"registrooperadora": "regans"})
+
+    # transforma cnpjs (identificadores) em strings, pois caso o cnpj tenha 0 antes do numero int, seu valor muda completamente.
     df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
+
     #df_registro = df_registro[df_registro["cnpj"].apply(cnpj_valido)]
     df_registro = (df_registro.sort_values("regans").drop_duplicates(subset=["regans"], keep="first"))
 
-
-    #Normalizo os nomes para os arquivos serem compativeis no join
-
-    #transforma cnpjs (identificadores) em strings, pois caso o cnpj tenha 0 antes do numero int, seu valor muda completamente.
-
-
-    # Join pelo CNPJ
+    # Join pelo Registro Ans, pois nao ha cnpj no arquivo de trimestre gerado.
     df_join = df_despesas.merge(
         df_registro,
         on="regans",
         how="left"
     )
 
-    df_join["cnpj"] = df_join["cnpj"].apply(lambda x: x if cnpj_valido(str(x)) else "CNPJ INVÁLIDO")
+    df_join["cnpj"] = df_join["cnpj"].fillna("")
+    df_join["cnpj"] = df_join["cnpj"].apply(
+        lambda x: x if cnpj_valido(x) else "CNPJ INVÁLIDO"
+    )
 
 
     df_join.to_csv(output_path, sep=";", index=False)
 
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+
+        zf.write(output_path, arcname="dados_totais.csv")
+
     #Agrupa por Razão Social e UF.
+    df_join["valordespesas"] = df_join["valordespesas"].astype(float)
+
     df_agrupado = df_join.groupby(["razaosocial", "uf"]).agg(
         totaldespesas=pd.NamedAgg(column="valordespesas", aggfunc="sum"),
         mediatrimestral=pd.NamedAgg(column="valordespesas", aggfunc="mean"),
         desviopadrao=pd.NamedAgg(column="valordespesas", aggfunc="std")
     ).reset_index()
 
+    df_agrupado[["totaldespesas", "mediatrimestral", "desviopadrao"]] = (
+        df_agrupado[["totaldespesas", "mediatrimestral", "desviopadrao"]].round(2)
+    )
+
     #Ordena do Maior para o Menor
-    df_agrupado = df_agrupado.sort_values(by="total_despesas", ascending=False)
-    df_agrupado.to_csv(output_path, sep=";", index=False)
-    os.remove(registros_path)
+    df_agrupado = df_agrupado.sort_values(by="totaldespesas", ascending=False)
+    df_agrupado.to_csv(groupby_path, sep=";", index=False)
+    if os.path.exists(registros_path):
+        os.remove(registros_path)
 
 
 
