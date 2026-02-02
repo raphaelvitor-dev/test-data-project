@@ -228,6 +228,7 @@ def proccess_quarter_data_parquet(year_dict, chunksize=cfg.chunksize):
 
 def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
     output_path = os.path.join("Trimestres", "consolidado_despesas.csv")
+    groupby_path = os.path.join("Trimestres", "groupby")
     zip_path = os.path.join("Trimestres", "consolidado_despesas.zip")
     first_write = True
 
@@ -286,10 +287,18 @@ def process_registrations():
     despesas_path = os.path.join("Trimestres", "consolidado_despesas.csv")
     registros_path = os.path.join("Trimestres", "Relatorio_cadop.csv")
     output_path = os.path.join("Trimestres", "despesas_agregadas.csv")
+    groupedby_path = os.path.join("Trimestres", "groupby.csv")
 
     #Lê os dataframes
-    df_despesas = pd.read_csv(despesas_path, sep=";")
-    df_registro = pd.read_csv(registros_path, sep=";")
+    if despesas_path.endswith(".csv"):
+        df_despesas = pd.read_csv(despesas_path, sep=";")
+        df_registro = pd.read_csv(registros_path, sep=";")
+    elif despesas_path.endswith(".txt"):
+        df_despesas = pd.read_csv(despesas_path, sep="\t")
+        df_registro = pd.read_csv(registros_path, sep="\t")
+    else :
+        df_despesas = pd.read_parquet(despesas_path, sep="\t")
+        df_registro = pd.read_parquet(registros_path, sep="\t")
 
     #Tratamento do df registro
     df_registro.columns = df_registro.columns.str.strip().str.lower().str.replace("_", "")
@@ -312,8 +321,22 @@ def process_registrations():
     )
 
     df_join["cnpj"] = df_join["cnpj"].apply(lambda x: x if cnpj_valido(str(x)) else "CNPJ INVÁLIDO")
+
+
     df_join.to_csv(output_path, sep=";", index=False)
+
+    #Agrupa por Razão Social e UF.
+    df_agrupado = df_join.groupby(["razaosocial", "uf"]).agg(
+        totaldespesas=pd.NamedAgg(column="valordespesas", aggfunc="sum"),
+        mediatrimestral=pd.NamedAgg(column="valordespesas", aggfunc="mean"),
+        desviopadrao=pd.NamedAgg(column="valordespesas", aggfunc="std")
+    ).reset_index()
+
+    #Ordena do Maior para o Menor
+    df_agrupado = df_agrupado.sort_values(by="total_despesas", ascending=False)
+    df_agrupado.to_csv(output_path, sep=";", index=False)
     os.remove(registros_path)
+
 
 
 
