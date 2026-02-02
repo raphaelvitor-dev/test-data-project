@@ -4,6 +4,7 @@ import pyarrow.parquet as pq
 import pyarrow as pa
 import config as cfg
 from decimal import Decimal
+import zipfile
 
 from config import chunksize
 
@@ -90,7 +91,7 @@ def check_files(year_dict, chunksize=cfg.chunksize):
 
 
 #Essa função lê os arquivos dos trimestres, e os junta em um arquivo final, por chunks para não estourar a memória.
-def proccess_quarter_data(year_dict, chunksize=cfg.chunksize):
+def proccess_quarter_data_parquet(year_dict, chunksize=cfg.chunksize):
     parquet_path = os.path.join(
         "Trimestres",
         "consolidado_despesas.parquet"
@@ -147,8 +148,7 @@ def proccess_quarter_data(year_dict, chunksize=cfg.chunksize):
                 # transformo os nomes das colunas em letra minuscula
                 df.columns = (df.columns.str.strip().str.lower().str.replace("_", ""))
 
-                if "descricao" not in df.columns:
-                    continue
+
 
 
                 # Padroniza os valores financeiros para que utilizem . ao invés da vírgula
@@ -169,6 +169,7 @@ def proccess_quarter_data(year_dict, chunksize=cfg.chunksize):
                 df["razaosocial"] = ""
                 df["ano"] = year
                 df["trimestre"] = quarter
+                df["descricao"] = df["descricao"].astype(str).str.lower()
 
                 table = pa.Table.from_pandas(
                     df,
@@ -189,6 +190,99 @@ def proccess_quarter_data(year_dict, chunksize=cfg.chunksize):
     finally:
         if parquet_writer:
             parquet_writer.close()
+
+#========================================================================#
+
+def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
+    output_path = os.path.join("Trimestres", "consolidado_despesas.csv")
+    zip_path = os.path.join("Trimestres", "consolidado_despesas.zip")
+    first_write = True
+
+
+    for file in year_dict:
+        file_path = file["file_path"]
+        year = file["year"]
+        quarter = file["quarter"]
+
+        if file_path.endswith(".csv"):
+            data_frame = pd.read_csv(file_path,sep=";",chunksize=chunksize)
+        elif file_path.endswith(".txt"):
+            data_frame = pd.read_csv(file_path,sep="\t",chunksize=chunksize)
+        else:
+            continue
+
+        for df in data_frame:
+
+                df = df.dropna(axis=1, how="all")
+
+                df.columns = (
+                    df.columns.str.strip()
+                    .str.lower()
+                    .str.replace("_", "")
+                )
+
+                for col in ["vlsaldoinicial", "vlsaldofinal"]:
+                    df[col] = (
+                        df[col].astype(str)
+                        .str.replace("R\\$ ?", "", regex=True)
+                        .str.replace(".", "", regex=False)
+                        .str.replace(",", ".", regex=False)
+                        .fillna("0")
+                        .apply(Decimal)
+                    )
+
+                df["valordespesas"] = df["vlsaldoinicial"] - df["vlsaldofinal"]
+                df["cnpj"] = ""
+                df["razaosocial"] = ""
+                df["ano"] = year
+                df["trimestre"] = quarter
+                df["descricao"] = df["descricao"].astype(str).str.lower()
+
+                df.to_csv(output_path,sep=";",index=False,mode="w" if first_write else "a",header=first_write)
+
+                first_write = False
+
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+
+        zf.write(output_path, arcname="consolidado_despesas.csv")
+
+
+
+#======================================================================#
+def process_registrations():
+    despesas_path = os.path.join("Trimestres", "consolidado_despesas.csv")
+    registros_path = os.path.join("Trimestres", "Relatorio_cadop.csv")
+    output_path = os.path.join("Trimestres", "despesas_agregadas.csv")
+
+    df_despesas = pd.read_csv(despesas_path, sep=";")
+    df_registro = pd.read_csv(registros_path, sep=";")
+
+    #Normalização dos nomes das colunas
+    df_registro.columns = df_registro.columns.str.strip().str.lower().str.replace("_", "")
+
+    #Criação de colunas:
+
+    #Normalizo os nomes para os arquivos serem compativeis no join
+    df_registro = df_registro.rename(columns={
+        "REGISTRO_OPERADORA" : "regans",
+        "CNPJ" : "cnpj"
+    })
+    #transforma cnpjs (identificadores) em strings, pois caso o cnpj tenha 0 antes do numero int, seu valor muda completamente.
+    df_despesas["cnpj"] = df_despesas["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
+    df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
+
+    # Join pelo CNPJ
+    df_join = df_despesas.merge(
+        df_registro,
+        on="cnpj",
+        how="left"
+    )
+
+    df_join.to_csv("consolidado_despesas_com_cadastro.csv", sep=";", index=False)
+
+
+
+
 
 
 
