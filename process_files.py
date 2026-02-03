@@ -1,7 +1,5 @@
 import pandas as pd
 import os
-import pyarrow.parquet as pq
-import pyarrow as pa
 import config as cfg
 from decimal import Decimal
 import zipfile
@@ -118,9 +116,8 @@ def check_files(year_dict, chunksize=cfg.chunksize):
 
 #================================================================#
 
-def proccess_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
+def process_quarter_data_csv(year_dict, chunksize=cfg.chunksize):
     output_path = os.path.join("Trimestres", "consolidado_despesas.csv")
-    groupby_path = os.path.join("Trimestres", "groupby")
     zip_path = os.path.join("Trimestres", "consolidado_despesas.zip")
 
     first_write = True
@@ -203,7 +200,7 @@ def process_registrations():
     # transforma cnpjs (identificadores) em strings, pois caso o cnpj tenha 0 antes do numero int, seu valor muda completamente.
     df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
 
-    #df_registro = df_registro[df_registro["cnpj"].apply(cnpj_valido)]
+    
     df_registro = (df_registro.sort_values("regans").drop_duplicates(subset=["regans"], keep="first"))
 
     # Join pelo Registro Ans, pois nao ha cnpj no arquivo de trimestre gerado.
