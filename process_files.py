@@ -253,10 +253,7 @@ def process_registrations():
             zf.extractall(file_path)
     print("Extracting final file...")
     extract_file()
-    if os.path.isfile("consolidado_despesas.csv"):
-        print("Program success!")
-    else:
-        print("Program failed!")
+    print("Files Processed!")
 
 
 
