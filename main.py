@@ -14,13 +14,11 @@ def main():
     lista = pf.get_file_paths(cfg.MIN_FILES)
     pf.get_file_paths(cfg.MIN_FILES)
     pf.check_files(lista)
+    print("Processing Files...")
     pf.proccess_quarter_data_csv(lista)
     pf.process_registrations()
 
-    print("Arquivos a serem processados \n")
 
-    for file in lista:
-        pp.pprint(file["file_path"])
 
 if __name__ == "__main__":
     main()

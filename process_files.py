@@ -214,10 +214,9 @@ def process_registrations():
     )
 
     df_join["cnpj"] = df_join["cnpj"].fillna("")
-    df_join["cnpj"] = df_join["cnpj"].apply(
-        lambda x: x if cnpj_valido(x) else "CNPJ INVÁLIDO"
+    df_join["cnpjinvalido"] = df_join["cnpj"].apply(
+        lambda x: not cnpj_valido(x)
     )
-
 
     df_join.to_csv(output_path, sep=";", index=False)
 
@@ -241,9 +240,23 @@ def process_registrations():
     #Ordena do Maior para o Menor
     df_agrupado = df_agrupado.sort_values(by="totaldespesas", ascending=False)
     df_agrupado.to_csv(groupby_path, sep=";", index=False)
+
+    #
     if os.path.exists(registros_path):
         os.remove(despesas_path)
         os.rename(zip_path, despesas_path)
+
+    def extract_file():
+        file_path = os.path.join("Trimestres")
+
+        with zipfile.ZipFile(despesas_path, "r") as zf:
+            zf.extractall(file_path)
+    print("Extracting final file...")
+    extract_file()
+    if os.path.isfile("consolidado_despesas.csv"):
+        print("Program success!")
+    else:
+        print("Program failed!")
 
 
 

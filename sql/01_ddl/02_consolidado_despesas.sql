@@ -1,0 +1,36 @@
+CREATE TABLE consolidado_despesas (
+    id SERIAL PRIMARY KEY,
+    data DATE,
+    reg_ans VARCHAR(10),
+    cd_conta_contabil VARCHAR(20),
+    descricao_gastos VARCHAR(200),
+    vl_saldo_inicial DECIMAL(15,2),
+    vl_saldo_final DECIMAL(15,2),
+    valor_despesas DECIMAL(15,2),
+    valor_suspeito BOOLEAN DEFAULT FALSE,
+    ano VARCHAR(15),
+    trimestre VARCHAR(2),
+    cnpj CHAR(14),
+    razao_social VARCHAR(150),
+    nome_fantasia VARCHAR(150),
+    modalidade VARCHAR(100),
+    logradouro VARCHAR(250),
+    numero VARCHAR(20),
+    complemento VARCHAR(100),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    uf CHAR(2),
+    cep VARCHAR(20),
+    ddd VARCHAR(5),
+    telefone VARCHAR(50),
+    fax VARCHAR(50),
+    endereco_eletronico VARCHAR(150),
+    representante VARCHAR(200),
+    cargo_representante VARCHAR(200),
+    regiao_comercializacao VARCHAR(15),
+    data_registro_ans DATE,
+    cnpj_invalido BOOLEAN DEFAULT FALSE
+
+
+
+);

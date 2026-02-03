@@ -1,0 +1,36 @@
+CREATE TABLE staging_consolidado_despesas (
+    id SERIAL PRIMARY KEY,
+    data DATE,
+    regans VARCHAR(50),
+    cdcontacontabil VARCHAR(20),
+    descricaogastos VARCHAR(200),
+    vlsaldoinicial DECIMAL(15,2),
+    vlsaldofinal DECIMAL(15,2),
+    valordespesas DECIMAL(15,2),
+    valorsuspeito BOOLEAN DEFAULT FALSE,
+    ano VARCHAR(5),
+    trimestre VARCHAR(2),
+    cnpj VARCHAR(30),
+    razaosocial VARCHAR(150),
+    nomefantasia VARCHAR(150),
+    modalidade VARCHAR(100),
+    logradouro VARCHAR(250),
+    numero VARCHAR(20),
+    complemento VARCHAR(100),
+    bairro VARCHAR(100),
+    cidade VARCHAR(100),
+    uf CHAR(2),
+    cep VARCHAR(20),
+    ddd VARCHAR(5),
+    telefone VARCHAR(50),
+    fax VARCHAR(50),
+    enderecoeletronico VARCHAR(150),
+    representante VARCHAR(200),
+    cargorepresentante VARCHAR(200),
+    regiaocomercializacao VARCHAR(15),
+    dataregistroans DATE,
+    cnpjinvalido BOOLEAN DEFAULT FALSE
+
+
+
+);

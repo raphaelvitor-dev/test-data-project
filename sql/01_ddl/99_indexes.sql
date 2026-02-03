@@ -1,3 +1,5 @@
+CREATE INDEX idx_cnpj ON dados_cadastrais(cnpj);
+CREATE INDEX idx_reg_op ON dados_cadastrais(reg_op);
 CREATE INDEX idx_data_completos ON consolidado_despesas(data);
 CREATE INDEX idx_reg_ans_completos ON consolidado_despesas(reg_ans);
 CREATE INDEX idx_cnpj_completos ON consolidado_despesas(cnpj);
@@ -6,3 +8,5 @@ CREATE INDEX idx_uf_completos ON consolidado_despesas(uf);
 CREATE INDEX idx_ano_trimestre ON consolidado_despesas(ano, trimestre);
 CREATE INDEX idx_valor_suspeito ON consolidado_despesas(valor_suspeito) WHERE valor_suspeito = TRUE;
 CREATE INDEX idx_periodo_operadora ON consolidado_despesas(ano, trimestre, reg_ans);
+CREATE INDEX idx_razao_social_agregados ON despesas_agregadas(razao_social);
+CREATE INDEX idx_uf_agregados ON despesas_agregadas(uf);
