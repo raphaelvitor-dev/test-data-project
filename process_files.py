@@ -242,7 +242,6 @@ def process_registrations():
     df_agrupado = df_agrupado.sort_values(by="totaldespesas", ascending=False)
     df_agrupado.to_csv(groupby_path, sep=";", index=False)
     if os.path.exists(registros_path):
-        os.remove(registros_path)
         os.remove(despesas_path)
         os.rename(zip_path, despesas_path)
 
