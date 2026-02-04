@@ -200,8 +200,21 @@ def process_registrations():
     # transforma cnpjs (identificadores) em strings, pois caso o cnpj tenha 0 antes do numero int, seu valor muda completamente.
     df_registro["cnpj"] = df_registro["cnpj"].astype(str).str.replace(r"\D", "", regex=True)
 
-    
-    df_registro = (df_registro.sort_values("regans").drop_duplicates(subset=["regans"], keep="first"))
+    #ordena as datas, desduplica cnpjs antigos
+    df_registro["dataregistroans"] = pd.to_datetime(
+        df_registro["dataregistroans"]
+    )
+
+    df_registro = df_registro.sort_values(
+        by="dataregistroans",
+        ascending=False
+    )
+
+    df_registro = df_registro.drop_duplicates(
+        subset=["cnpj"],
+        keep="first"
+    )
+
 
     # Join pelo Registro Ans, pois nao ha cnpj no arquivo de trimestre gerado.
     df_join = df_despesas.merge(

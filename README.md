@@ -13,8 +13,22 @@ porém caso consiga uma oportunidade, meu aprendizado será continuo e com máxi
 3. **OS:** Para manipulação do Sistema Operacional e Lógicas
 4. **ZipFile:** Para compactar e extrair arquivos
 5. **Pandas:** Para processar os dados dos arquivos recebidos na API
-6. **Decimal:** Para tratar valores monetários
+6. **Decimal:** Para tratar valores monetários caso necessário
 7. **FastAPI:** Para criar endpoints bem definidos
+
+## **COMO EXECUTAR O PROGRAMA**
+1. Requer Python 3.14
+2. Crie o ambiente virtual com python -m venv .venv
+3. Execute .venv/Scripts/activate
+4. Execute pip install -r requirements.txt
+5. Execute python main.py
+6. **ATENÇÃO** Para a criação das tabelas, altere o diretório nos 3 arquivos da pasta sql/03_import
+7. Devido ao prazo, encerro por aqui o teste. A pasta api está incompleta pois comecei a desenvolvê-la e devido ao prazo optei por não continuar.
+
+
+## Config.py
+Para melhorar o desacoplamento, implementei variáveis globais, usadas como parâmetro em mais de uma função no arquivo
+config.py. Adiante explico melhor o que cada variável faz.
 
 ## Downloader:
 Antes de começarmos, baseei a lógica do programa em um schema presumido do DB.  
@@ -49,12 +63,27 @@ Com o downloader construído dessa forma, enquanto os dados no DB tiverem essa n
 A parte de processamento e normalização dos dados envolve tanto o teste 1.3 quanto o teste 2. O processamento e leitura dos dados, foi construido incrementalmente.  
 Isso nos dá pelo menos um controle, evitando estouro de memória. O número de chunks (nesse contexto são as linhas) processados no programa, pode ser alterado no arquivo config.py.
 Para manter o padrão do processamento, arquivos excel não suportam leitura por chunk. Então implementei uma lógica para convertê-los em csv, e após isso iniciar a leitura por chunk.
+O formato de TRIMESTRES foi tratado no arquivo Downloader. As datas inconsistentes foram tratadas no comando pd.to_datetime. Utilizei DATE, porque o formato ja vem do DB dessa forma.
 
 ### TRATAMENTO CNPJ
 
 Pesquisei sobre como o algoritmo do CNPJ funciona. Na internet é possivel achá-lo, então criei uma função que verifica se o CNPJ é válido ou não.
 Optei por não excluir os CNPJs inválidos, mas sim no arquivo final, criar uma coluna chamada cnpj_inválido, que retorna um boolean True or False.
-Dessa maneira, é possível realizar Queries, filtrando apenas CNPJs verdadeiros.
+Dessa maneira, é possível realizar Queries, filtrando apenas CNPJs verdadeiros. Além disso, ordenei por data e desdupliquei os CNPJs, integrando o mais atual aos dados.
+
+### DESPEPSAS AGREGADAS
+Para gerar a tabela Despesas Agregadas, agrupei por Razão Social e UF, adicionando a tabela a Média, Desvio Padrão e Total de Despesas. Os valores estão com precisão de 2 casas decimais.
+A transformação em Decimal foi Realizada nas QUERIES SQL, pois os métodos do pandas para gerar média, soma e desvio funcionam melhor com float.
+
+## QUERIES SQL
+Para as queries SQL para criação das tabelas, organizei em 01_DDL, 02_STAGING, 03_IMPORT, 04_INDEXES e 05_ANALYSIS, seguindo essa ordem. Para as QUERIES de análise mais complexa,
+foi utilizado a ajuda da IA Claude, com revisão após o scaffolding do código. Para a Query 1 analítica, pressupõe-se que dados serão perdidos devido à ambiguidade. A Query 2 soma
+as despesas das operadoras e por UF e mostra os estados com maiores despesas. A query 3 calcula a média geral, a média por trimestre, e filtra quantas operadoras ficaram com a média
+acima dessa média trimestral. Como não deu tempo de desenvolver a API e Interface, sem scripts, as queries podem ser utilizadas direto no pgAdmin do postgresql.
+
+## CONSIDERAÇÕES FINAIS
+Com esse projeto, expandi os meus conhecimentos, a minha lógica de programação e aprendi conceitos não antes visto. Foi um verdadeiro desafio, ainda mais para quem estudava outra stack.
+Dito isso, espero contribuir e me desenvolver caso receba uma oportunidade!
 
 
 

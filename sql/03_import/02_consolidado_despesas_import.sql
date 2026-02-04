@@ -31,8 +31,8 @@ COPY staging_consolidado_despesas (
     dataregistroans,
     cnpjinvalido
     )
-
-FROM 'F:\PYTHON\test-data-project\Trimestres\consolidado_despesas.csv'
+    --ALTERE O DIRETORIO PARA CRIAR A TABELA
+FROM '...\Pasta-Raiz-Projeto\Trimestres\consolidado_despesas.csv'
 DELIMITER ';'
 CSV HEADER
 ENCODING 'UTF8';

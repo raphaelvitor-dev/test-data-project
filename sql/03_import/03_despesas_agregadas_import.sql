@@ -6,7 +6,9 @@ COPY staging_despesas_agregadas(
     mediatrimestral,
     desviopadrao
     )
-FROM 'F:\PYTHON\test-data-project\Trimestres\despesas_agregadas.csv'
+
+    --ALTERE O DIRETORIO PARA CRIAR A TABELA
+FROM '...\Pasta-Raiz-Projeto\Trimestres\despesas_agregadas.csv'
 DELIMITER ';'
 CSV HEADER
 ENCODING 'UTF8';

@@ -20,8 +20,8 @@ COPY staging_dados_cadastrais(
     Regiao_de_Comercializacao,
     Data_Registro_ANS
 )
-
-FROM 'F:/PYTHON/test-data-project/Trimestres/Relatorio_cadop.csv'
+    --ALTERE O DIRETORIO PARA CRIAR A TABELA
+FROM '.../Pasta-Raiz-Projeto/Trimestres/Relatorio_cadop.csv'
 DELIMITER ';'
 CSV HEADER
 QUOTE '"'
